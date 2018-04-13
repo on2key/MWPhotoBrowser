@@ -177,7 +177,11 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         _nextButton = [[UIBarButtonItem alloc] initWithImage:nextButtonImage style:UIBarButtonItemStylePlain target:self action:@selector(gotoNextPage)];
     }
     if (self.displayActionButton) {
-        _actionButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(actionButtonPressed:)];
+        //_actionButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(actionButtonPressed:)];
+    	UIButton *rightBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 30, 30)];
+        [rightBtn setImage:[UIImage imageNamed:@"photo_ic_download"] forState:UIControlStateNormal];
+        [rightBtn addTarget:self action:@selector(actionButtonPressed:)forControlEvents:UIControlEventTouchUpInside];
+        _actionButton = [[UIBarButtonItem alloc] initWithCustomView:rightBtn];
     }
     
     // Update
