@@ -212,9 +212,9 @@
 - (void)_performLoadUnderlyingImageAndNotifyWithWebURL:(NSURL *)url {
     @try {
         SDWebImageManager *manager = [SDWebImageManager sharedManager];
-        _webImageOperation = [manager downloadImageWithURL:url
+        _webImageOperation = [manager.imageDownloader downloadImageWithURL:url
                                                    options:0
-                                                  progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                                                  progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
                                                       if (expectedSize > 0) {
                                                           float progress = receivedSize / (float)expectedSize;
                                                           NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -223,7 +223,7 @@
                                                           [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
                                                       }
                                                   }
-                                                 completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+                                                 completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, BOOL finished) {
                                                      if (error) {
                                                          MWLog(@"SDWebImage failed to download image: %@", error);
                                                      }
