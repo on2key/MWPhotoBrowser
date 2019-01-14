@@ -331,7 +331,13 @@
 
 - (void)cancelAnyLoading {
     if (_webImageOperation != nil) {
-        [_webImageOperation cancel];
+        //        [_webImageOperation cancel];
+        if ([_webImageOperation conformsToProtocol:@protocol(SDWebImageOperation)]) {
+            [_webImageOperation cancel];
+        }else if ([_webImageOperation isKindOfClass:SDWebImageDownloadToken.class]){
+            SDWebImageDownloader *loader = [SDWebImageDownloader sharedDownloader];
+            [loader cancel:_webImageOperation];
+        }
         _loadingInProgress = NO;
     }
     [self cancelImageRequest];
