@@ -1225,55 +1225,95 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     }
 }
 
+//2019.04.01 - 更改Mp为Av
+//- (void)_playVideo:(NSURL *)videoURL atPhotoIndex:(NSUInteger)index {
+//
+//    // Setup player
+//    _currentVideoPlayerViewController = [[MPMoviePlayerViewController alloc] initWithContentURL:videoURL];
+//    [_currentVideoPlayerViewController.moviePlayer prepareToPlay];
+//    _currentVideoPlayerViewController.moviePlayer.shouldAutoplay = YES;
+//    _currentVideoPlayerViewController.moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
+//    _currentVideoPlayerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+//
+//    // Remove the movie player view controller from the "playback did finish" notification observers
+//    // Observe ourselves so we can get it to use the crossfade transition
+//    [[NSNotificationCenter defaultCenter] removeObserver:_currentVideoPlayerViewController
+//                                                    name:MPMoviePlayerPlaybackDidFinishNotification
+//                                                  object:_currentVideoPlayerViewController.moviePlayer];
+//    [[NSNotificationCenter defaultCenter] addObserver:self
+//                                             selector:@selector(videoFinishedCallback:)
+//                                                 name:MPMoviePlayerPlaybackDidFinishNotification
+//                                               object:_currentVideoPlayerViewController.moviePlayer];
+//
+//    // Show
+//    [self presentViewController:_currentVideoPlayerViewController animated:YES completion:nil];
+//
+//}
 - (void)_playVideo:(NSURL *)videoURL atPhotoIndex:(NSUInteger)index {
-
+    
     // Setup player
-    _currentVideoPlayerViewController = [[MPMoviePlayerViewController alloc] initWithContentURL:videoURL];
-    [_currentVideoPlayerViewController.moviePlayer prepareToPlay];
-    _currentVideoPlayerViewController.moviePlayer.shouldAutoplay = YES;
-    _currentVideoPlayerViewController.moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
-    _currentVideoPlayerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    // 控制器的player播放器
+    _currentVideoPlayerViewController = [[AVPlayerViewController alloc] init];
+    _currentVideoPlayerViewController.player = [[AVPlayer alloc]initWithURL:videoURL];
+    //设置自动播放
+    @try {
+        [_currentVideoPlayerViewController setValue:@(YES) forKey:@"_playerShouldAutoplay"];
+    } @catch (NSException *exception) {
+        NSLog(@"%@",exception.reason);
+    } @finally {
+        
+    }
+    // 试图的填充模式
+    _currentVideoPlayerViewController.videoGravity = AVLayerVideoGravityResizeAspect;
+    // 是否显示播放控制条
+    _currentVideoPlayerViewController.showsPlaybackControls = YES;
     
-    // Remove the movie player view controller from the "playback did finish" notification observers
-    // Observe ourselves so we can get it to use the crossfade transition
-    [[NSNotificationCenter defaultCenter] removeObserver:_currentVideoPlayerViewController
-                                                    name:MPMoviePlayerPlaybackDidFinishNotification
-                                                  object:_currentVideoPlayerViewController.moviePlayer];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(videoFinishedCallback:)
-                                                 name:MPMoviePlayerPlaybackDidFinishNotification
-                                               object:_currentVideoPlayerViewController.moviePlayer];
-
-    // Show
-    [self presentViewController:_currentVideoPlayerViewController animated:YES completion:nil];
-
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification  object:nil];
+    
+    typeof(self) __weak weakSelf = self;
+    [self presentViewController:_currentVideoPlayerViewController animated:NO completion:^{
+        [weakSelf setVideoLoadingIndicatorVisible:NO atPageIndex:index];
+        [[weakSelf pageDisplayedAtIndex:_currentVideoIndex] playButton].hidden = NO;
+        _currentVideoIndex = NSUIntegerMax;
+    }];
 }
-
-- (void)videoFinishedCallback:(NSNotification*)notification {
+- (void)playbackFinished:(NSNotification*)notification {
     
-    // Remove observer
     [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:MPMoviePlayerPlaybackDidFinishNotification
-                                                  object:_currentVideoPlayerViewController.moviePlayer];
+                                                    name:AVPlayerItemDidPlayToEndTimeNotification
+                                                  object:nil];
     
-    // Clear up
     [self clearCurrentVideo];
     
     // Dismiss
-    BOOL error = [[[notification userInfo] objectForKey:MPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue] == MPMovieFinishReasonPlaybackError;
-    if (error) {
-        // Error occured so dismiss with a delay incase error was immediate and we need to wait to dismiss the VC
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self dismissViewControllerAnimated:YES completion:nil];
-        });
-    } else {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
-    
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
+//- (void)videoFinishedCallback:(NSNotification*)notification {
+//
+//    // Remove observer
+//    [[NSNotificationCenter defaultCenter] removeObserver:self
+//                                                    name:MPMoviePlayerPlaybackDidFinishNotification
+//                                                  object:_currentVideoPlayerViewController.moviePlayer];
+//
+//    // Clear up
+//    [self clearCurrentVideo];
+//
+//    // Dismiss
+//    BOOL error = [[[notification userInfo] objectForKey:MPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue] == MPMovieFinishReasonPlaybackError;
+//    if (error) {
+//        // Error occured so dismiss with a delay incase error was immediate and we need to wait to dismiss the VC
+//        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+//            [self dismissViewControllerAnimated:YES completion:nil];
+//        });
+//    } else {
+//        [self dismissViewControllerAnimated:YES completion:nil];
+//    }
+//
+//}
 
 - (void)clearCurrentVideo {
-    [_currentVideoPlayerViewController.moviePlayer stop];
+//    [_currentVideoPlayerViewController.moviePlayer stop];
+    [_currentVideoPlayerViewController.player pause];
     [_currentVideoLoadingIndicator removeFromSuperview];
     _currentVideoPlayerViewController = nil;
     _currentVideoLoadingIndicator = nil;
